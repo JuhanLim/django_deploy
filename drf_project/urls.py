@@ -15,9 +15,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from my_app.views import HelloView
+from rest_framework.routers import DefaultRouter
+from .views import LargeCategoryViewSet
+
+router = DefaultRouter()
+router.register(r'largecategory', LargeCategoryViewSet)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("hello/", HelloView.as_view(), name="hello")
+    path("hello/", HelloView.as_view(), name="hello"),
+    path("api/tables/", include(router.urls)),
+    path("api/", include(covermap.urls)),
 ]
+
+# @admin.register(Location)
+# class LocationAdmin(admin.OSMGeoAdmin):
+#     list_display = ('name','point')
