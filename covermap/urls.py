@@ -1,6 +1,11 @@
-from django.urls import path
-from .views import get_table_list
+from django.urls import path, include
+from . import views
+from rest_framework.routers import DefaultRouter
+# from .views import get_table_list
+# from covermap.views import LargeCategoryViewSet # 여기서 app 의 view 를 가져와야하는데 안그래서 오류남  
 
+router = DefaultRouter()
+router.register(r'largecategory', views.LargeCategoryViewSet)
 urlpatterns = [
-    path('tables/', get_table_list, name='get_table_list'),  # 세부 경로를 앱 레벨에서 정의
+    path('', include(router.urls)),
 ]

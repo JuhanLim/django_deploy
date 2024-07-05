@@ -17,17 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from my_app.views import HelloView
-from rest_framework.routers import DefaultRouter
-from .views import LargeCategoryViewSet
+#from covermap.views import get_table_list 
+# from rest_framework.routers import DefaultRouter
+# from covermap.views import LargeCategoryViewSet # 여기서 app 의 view 를 가져와야하는데 안그래서 오류남  
 
-router = DefaultRouter()
-router.register(r'largecategory', LargeCategoryViewSet)
+# router = DefaultRouter()
+# router.register(r'largecategory', LargeCategoryViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("hello/", HelloView.as_view(), name="hello"),
-    path("api/tables/", include(router.urls)),
-    path("api/", include(covermap.urls)),
+    #path("tables/", get_table_list.as_view(), name="get_table_list"),
+    # path("", include(router.urls)),
+    path("covermap/", include('covermap.urls')),
 ]
 
 # @admin.register(Location)
