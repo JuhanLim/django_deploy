@@ -9,10 +9,11 @@ jobs:
         runs-on: ubuntu-latest
         # defaults:
         #     run:
-        #         working-directory : DroMii_KWOS
+        #         working-directory : DroMii_KWOS # 
 
         steps:
-
+            - name: Show current directory
+              run: pwd
             - name: List root directory contents
               run: ls -alh
             - name: Verify DroMii_KWOS directory existence
