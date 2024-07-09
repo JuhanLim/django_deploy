@@ -1,0 +1,22 @@
+name: KWOS CI/CD Pipeline
+
+on:
+    push:
+        branches: [ main ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name : echo test
+              run : echo testing 
+            - name : cd test
+              run : cd DroMii_KWOS
+            - name : makir test
+              run : mkdir cicdmkdirtest
+              
+
+
+
+            
