@@ -7,14 +7,15 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory : ./DroMii_KWOS
 
         steps:
             - name : echo test
               run : echo testing 
             - name : ls test
               run : ls
-            - name : cd test
-              run : cd /root/django_deploy/DroMii_KWOS
             - name : makir test
               run : mkdir cicdmkdirtest
 
