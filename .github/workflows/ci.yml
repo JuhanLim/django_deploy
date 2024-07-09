@@ -11,11 +11,13 @@ jobs:
         steps:
             - name : echo test
               run : echo testing 
+            - name : ls test
+              run : ls
             - name : cd test
-              run : cd DroMii_KWOS
+              run : cd /root/django_deploy/DroMii_KWOS
             - name : makir test
               run : mkdir cicdmkdirtest
-              
+
 
 
 
