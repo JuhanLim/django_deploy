@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-v0(w91=lnx#d^^yh)z3@mlrunsq@@dmv9y()6^re5rl&6-*%+*"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -44,25 +44,48 @@ INSTALLED_APPS = [
     "my_app",
     "django.contrib.gis",
     "covermap",
+    "corsheaders",
 
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+CORS_ALLOW_ALL_ORIGINS = True
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://175.45.204.163:3000",
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     # 이게 아니라 밑에게 맞는듯 
+# ]
+
+CORS_ORIGIN_WHITELIST = [
+    "http://175.45.204.163:8080",
+    "http://175.45.204.163:8080/geoserver",
+    "http://175.45.204.163:3000",
+    "http://175.45.204.163:8000",
+    "http://175.45.204.163:80",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# 모든 도메인을 허용하려면
+
 
 ROOT_URLCONF = "drf_project.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": ['client'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -93,6 +116,11 @@ DATABASES = {
         'PORT': config('DB_PORT', default='5432'),
     }
 }
+
+# GeoServer 설정 
+from decouple import config
+GEOSERVER_USER = config('GEOSERVER_USER')
+GEOSERVER_PASSWORD = config('GEOSERVER_PASSWORD')
 
 
 # Password validation
