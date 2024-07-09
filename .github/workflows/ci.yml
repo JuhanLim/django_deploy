@@ -7,19 +7,19 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory : DroMii_KWOS
+        # defaults:
+        #     run:
+        #         working-directory : DroMii_KWOS
 
         steps:
+
+            - name: List root directory contents
+              run: ls -alh
+            - name: Verify DroMii_KWOS directory existence
+              run: ls -alh DroMii_KWOS
             - name : echo test
               run : echo testing 
             - name : ls test
               run : ls
             - name : makir test
               run : mkdir cicdmkdirtest
-
-
-
-
-            
