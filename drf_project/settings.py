@@ -159,8 +159,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "static" # 지금은 루트폴더의 static 을 이용하고 있는데 , 
+STATIC_URL = "/static/" # 정적파일을 요청하는 주소
+STATIC_ROOT = BASE_DIR / "DroMii_KWOS/build/static" # 지금은 루트폴더의 static 을 이용하고 있는데 , 
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"

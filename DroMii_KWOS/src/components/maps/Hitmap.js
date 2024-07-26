@@ -32,7 +32,7 @@ const HeatmapMap = () => {
 
     const wmsLayer1 = new TileLayer({
         source: new TileWMS({
-          url: 'http://175.45.204.163/geoserver/yeongju/wms',
+          url: 'http://localhost:8080/geoserver/yeongju/wms',
           params: {
             'LAYERS': 'yeongju:yeongju_AOI',
             'TILED': true,

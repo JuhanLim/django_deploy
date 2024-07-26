@@ -1,254 +1,349 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
-//openlayers
+import { useLocation } from 'react-router-dom';
+import { fromLonLat } from 'ol/proj';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import 'ol/ol.css';
-import { Tile as TileLayer } from 'ol/layer';
-import { ScaleLine, defaults as defaultControls } from 'ol/control';
-import { fromLonLat } from 'ol/proj';
+import TileLayer from 'ol/layer/Tile';
 import { OSM, TileWMS } from 'ol/source';
-//bootstrap
-import Form from 'react-bootstrap/Form';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import GpsNotFixedIcon from '@mui/icons-material/GpsNotFixed';
+import Button from '@mui/material/Button';
 
+const geoserverUrl = process.env.REACT_APP_GEOSERVER_URI;
 
-  const ComparePage = () => {
-    const leftMapRef = useRef(null);
-    const rightMapRef = useRef(null);
-    const [selectedLeftLayer, setSelectedLeftLayer] = useState('falsecolor');
-    const [selectedRightLayer, setSelectedRightLayer] = useState('truecolor');
+const Tiff = [
+  {
+    title: 'yongdamAOI:20230422_NIR',
+    type: 'nir',
+    years:'2023',
+    name:'20230422_NIR',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_NIR',
+  },
+  {
+    title: 'yongdamAOI:20230422_RGB',
+    type: 'rgb',
+    years:'2023',
+    name:'20230422_RGB',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_RGB',
+  },
+  {
+    title: 'yongdamAOI:20230422_NDVI',
+    type: 'ndvi',
+    years:'2023',
+    name:'20230422_NDVI',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_NDVI',
+  },
+  {
+    title: 'yongdamAOI:20230422_NDWI',
+    type: 'ndwi',
+    years:'2023',
+    name:'20230422_NDWI',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_NDWI',
+  },
+  {
+    title: 'yongdamAOI:20230422_NIR_super',
+    type: 'rgb',
+    years:'2023',
+    name:'20230422_NIR_super',
+    coordinate: '',
+    description: '',
+    layers:'yongdamAOI:20230422_NIR_super',
+  },
+  {
+    title: 'yongdamAOI:20230422_RGB_super',
+    type: 'nir',
+    years:'2023',
+    name:'20230422_RGB_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_RGB_super',
+  },
+  {
+    title: 'yongdamAOI:20230422_NDVI_super',
+    type: 'ndvi',
+    years:'2023',
+    name:'20230422_NDVI_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_NDVI_super',
+  },
+  {
+    title: 'yongdamAOI:20230422_NDWI_super',
+    type: 'ndwi',
+    years:'2023',
+    name:'20230422_NDWI_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20230422_NDWI_super',
+  },
+  {
+    title: 'yongdamAOI:20240610_NIR',
+    type: 'nir',
+    years:'2024',
+    name:'20240610_NIR',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_NIR',
+  },
+  {
+    title: 'yongdamAOI:20240610_RGB',
+    type: 'rgb',
+    years:'2024',
+    name:'20240610_RGB',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_RGB',
+  },
+  {
+    title: 'yongdamAOI:20240610_NDVI',
+    type: 'ndvi',
+    years:'2024',
+    name:'20240610_NDVI',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_NDVI',
+  },
+  {
+    title: 'yongdamAOI:20240610_NDWI',
+    type: 'ndwi',
+    years:'2024',
+    name:'20240610_NDWI',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_NDWI',
+  },
+  {
+    title: 'yongdamAOI:20240610_NIR_super',
+    type: 'rgb',
+    years:'2024',
+    name:'20240610_NIR_super',
+    coordinate: '',
+    description: '',
+    layers:'yongdamAOI:20240610_NIR_super',
+  },
+  {
+    title: 'yongdamAOI:20240610_RGB_super',
+    type: 'nir',
+    years:'2024',
+    name:'20240610_RGB_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_RGB_super',
+  },
+  {
+    title: 'yongdamAOI:20240610_NDVI_super',
+    type: 'ndvi',
+    years:'2024',
+    name:'20240610_NDVI_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_NDVI_super',
+  },
+  {
+    title: 'yongdamAOI:20240610_NDWI_super',
+    type: 'ndwi',
+    years:'2024',
+    name:'20240610_NDWI_super',
+    coordinate: '',
+    description: '',
+    layers: 'yongdamAOI:20240610_NDWI_super',
+  },
+];
 
-    useEffect(() => {
-      if (!leftMapRef.current || !rightMapRef.current) return;
+const ComparePage = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const images = queryParams.get('images')?.split(',').map(decodeURIComponent) || [];
+  const mapInstancesRef = useRef([]);
+  const [syncEnabled, setSyncEnabled] = useState(false);
+  const [masterMapIndex, setMasterMapIndex] = useState(null);
 
+  useEffect(() => {
+    const newMapInstances = images.map((imageTitle, index) => {
+      const tiffData = Tiff.find((item) => item.title === imageTitle);
+      if (!tiffData) {
+        console.error(`No data found for image title: ${imageTitle}`);
+        return null;
+      }
+      console.log(`Adding layer for ${tiffData.layers}`);
 
-
-      const leftScaleLineControl = new ScaleLine({ units: 'metric' });
-      const rightScaleLineControl = new ScaleLine({ units: 'metric' });
-
-
-
-     const yeongjuCoords = [128.7436, 36.8057];
-
-      const leftView = new View({
-        center: fromLonLat(yeongjuCoords), // 초기 좌표값을 영주시로 설정
-        zoom: 10.5,
-      });
-
-      const rightView = new View({
-        center: fromLonLat(yeongjuCoords),//초기 좌표값
-        zoom: 10.5,
-      });
-
-      const leftMap = new Map({
-        controls: defaultControls().extend([leftScaleLineControl]),
-        target: leftMapRef.current,
+      const map = new Map({
+        target: `map-${index}`,
         layers: [
           new TileLayer({
             source: new OSM(),
-            opacity: 0.8,  // 이 레이어의 투명도를 0.8로 설정
-        }),
-        new TileLayer({
-        source: new TileWMS({
-        url: 'http://175.45.204.163/geoserver/cite/wms',
-        params: {
-        'SERVICE': 'WMS',
-        'VERSION': '1.1.0',
-        'REQUEST': 'GetMap',
-        'LAYERS': `cite:${selectedLeftLayer}`,
-        'STYLES': '',
-        'FORMAT': 'image/png',
-        'SRS': 'EPSG:4326',
-        'BBOX': '128.57662172318797,36.57692485751569,128.9984858442199,37.092351951001156',
-        'WIDTH': 628,
-        'HEIGHT': 768
-        },
-        serverType: 'geoserver',
-        }),
-        }),
-      // new TileLayer({
-      //   source: new TileWMS({
-      //     url: 'http://175.45.204.163/geoserver/cite/wms',
-      //     params: {
-      //       'SERVICE': 'WMS',
-      //       'VERSION': '1.1.0',
-      //       'REQUEST': 'GetMap',
-      //       'LAYERS': 'cite:none',
-      //       'STYLES': '',
-      //       'FORMAT': 'image/png',
-      //       'SRS': 'EPSG:4326',
-      //       'BBOX': '128.4999714770943,36.49997778210691,128.99999008634038,37.1250228474229',
-      //       'WIDTH': 614,
-      //       'HEIGHT': 768
-      //     },
-      //     serverType: 'geoserver',
-      //   }),
-        
-      // }),
-
-      ],
-      view: leftView,
-      });
-
-
-
-
-      const rightMap = new Map({
-        controls: defaultControls().extend([rightScaleLineControl]),
-        target: rightMapRef.current,
-        layers: [
-        new TileLayer({
-        source: new OSM(),
-        }),
-        new TileLayer({
-        source: new TileWMS({
-        url: 'http://175.45.204.163/geoserver/cite/wms',
-        params: {
-        'SERVICE': 'WMS',
-        'VERSION': '1.1.0',
-        'REQUEST': 'GetMap',
-        'LAYERS': `cite:${selectedRightLayer}`,
-        'STYLES': '',
-        'FORMAT': 'image/png',
-        'SRS': 'EPSG:4326',
-        'BBOX': '128.57662172318797,36.57692485751569,128.9984858442199,37.092351951001156',
-        'WIDTH': 628,
-        'HEIGHT': 768
-        },
-        serverType: 'geoserver',
-        }),
-        }),
+          }),
+          new TileLayer({
+            source: new TileWMS({
+              url: `${geoserverUrl}/wms`,
+              params: { 'LAYERS': tiffData.layers, 'TILED': true },
+              serverType: 'geoserver',
+            }),
+          }),
         ],
-        view: rightView,
+        view: new View({
+          center: fromLonLat([127.5256, 35.9448]),
+          zoom: 10,
+          minZoom: 10,
+          maxZoom: 19,
+        }),
       });
 
-      const debounce = (func, wait) => {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-      };
+      return map;
+    }).filter((map) => map !== null);
 
-      const syncViews = (view1, view2) => {
-        const syncCenter = debounce(() => {
-          view2.setCenter(view1.getCenter());
-        }, 100);
+    newMapInstances.forEach((map, index) => {
+      if (map) map.setTarget(`map-${index}`);
+    });
 
-        const syncResolution = debounce(() => {
-          view2.setResolution(view1.getResolution());
-        }, 100);
+    mapInstancesRef.current = newMapInstances;
 
-        view1.on('change:center', syncCenter);
-        view1.on('change:resolution', syncResolution);
-      };
-
-      syncViews(leftView, rightView);
-      syncViews(rightView, leftView);
-
-      return () => {
-      leftMap.setTarget(null);
-      rightMap.setTarget(null);
+    return () => {
+      newMapInstances.forEach((map) => {
+        if (map) map.setTarget(null);
+      });
     };
+  }, [images]);
 
-    }, [selectedLeftLayer,selectedRightLayer]);
+  useEffect(() => {
+    if (masterMapIndex !== null && syncEnabled) {
+      const masterMap = mapInstancesRef.current[masterMapIndex];
+      if (masterMap) {
+        const syncView = () => {
+          const center = masterMap.getView().getCenter();
+          const zoom = masterMap.getView().getZoom();
+          mapInstancesRef.current.forEach((map, index) => {
+            if (index !== masterMapIndex) {
+              map.getView().setCenter(center);
+              map.getView().setZoom(zoom);
+            }
+          });
+        };
 
+        masterMap.on('moveend', syncView);
 
+        return () => {
+          masterMap.un('moveend', syncView);
+        };
+      }
+    }
+  }, [masterMapIndex, syncEnabled]);
 
-  const handleleftLayerChange = (event) => {
-  setSelectedLeftLayer(event.target.value);
+  const handleSyncToggle = (index) => {
+    if (syncEnabled && masterMapIndex === index) {
+      setSyncEnabled(false);
+      setMasterMapIndex(null);
+    } else {
+      setSyncEnabled(true);
+      setMasterMapIndex(index);
+    }
   };
-  const handlerightLayerChange = (event) => {
-  setSelectedRightLayer(event.target.value);
+
+  const getGridTemplate = (count, index) => {
+    if (count === 10) return { xs: 2.4 };
+    if (count === 9) return { xs: index < 5 ? 2.4 : 3 };
+    if (count === 8) return { xs: 3 };
+    if (count === 7) return { xs: index < 4 ? 3 : 4 };
+    if (count === 6) return { xs: 4 };
+    if (count === 5) return { xs: index < 3 ? 4 : 6 };
+    if (count === 4) return { xs: 6 };
+    if (count === 3) return { xs: index < 2 ? 6 : 12 };
+    if (count === 2) return { xs: 6 };
+    return { xs: 12 };
   };
-
-
 
   return (
-  <div style={{ display: 'flex' }}>
-    <Bap ref={leftMapRef} style={{ width: '50%', height: '100vh' }}>
-      <TitleContainer>
-        <TitleBox>
-          {selectedLeftLayer}
-        </TitleBox>
-      </TitleContainer>
-      <MapControlContainer>
-        <Form.Select aria-label="Default select example" onChange={handleleftLayerChange}>
-            <option value="falsecolor(20220509)">falsecolor(20220509)</option>
-            <option value="falsecolor(20230509)">falsecolor(20230509)</option>
-            <option value="NDVI(20220509)">NDVI(20220509)</option>
-            <option value="NDVI(20230509)">NDVI(20230509)</option>
-            <option value="NDWI(20220509)">NDWI(20220509)</option>
-            <option value="NDWI(20230509)">NDWI(20230509)</option>
-            <option value="truecolor(20220509)">truecolor(20220509)</option>
-            <option value="truecolor(20230509)">truecolor(20230509)</option>
-            <option value="truecolor">truecolor</option>
-            <option value="falsecolor">falsecolor</option>
-        </Form.Select>
-      </MapControlContainer>
-    </Bap>
-    <Bap ref={rightMapRef} style={{ width: '50%', height: '100vh' }}>
-      <TitleContainer>
-        <TitleBox>
-          {selectedRightLayer}
-        </TitleBox>
-      </TitleContainer>
-      <MapControlContainer>
-          <Form.Select aria-label="Default select example" onChange={handlerightLayerChange}>
-            <option value="falsecolor(20220509)">falsecolor(20220509)</option>
-            <option value="falsecolor(20230509)">falsecolor(20230509)</option>
-            <option value="NDVI(20220509)">NDVI(20220509)</option>
-            <option value="NDVI(20230509)">NDVI(20230509)</option>
-            <option value="NDWI(20220509)">NDWI(20220509)</option>
-            <option value="NDWI(20230509)">NDWI(20230509)</option>
-            <option value="truecolor(20220509)">truecolor(20220509)</option>
-            <option value="truecolor(20230509)">truecolor(20230509)</option>
-            <option value="truecolor">truecolor</option>
-            <option value="falsecolor">falsecolor</option>
-          </Form.Select>
-        </MapControlContainer>
-    </Bap>
-  </div>
+    <div style={{ width: '100%', height: '100vh' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%', height: '100%' }}>
+        {images.map((imageTitle, index) => {
+          const gridTemplate = getGridTemplate(images.length, index);
+          return (
+            <div
+              key={index}
+              style={{
+                width: `${gridTemplate.xs * (100 / 12)}%`,
+                height: images.length <= 2 ? '100%' : '50%',
+                boxSizing: 'border-box',
+                padding: '1px',
+                position: 'relative',
+              }}
+            >
+              <div id={`map-${index}`} style={{ width: '100%', height: '100%' }}>
+                <div style={{ position: 'absolute', top: '120px', left: '10px', zIndex: 1 }}>
+                  <Btn
+                    variant={syncEnabled && masterMapIndex === index ? 'contained' : 'outlined'}
+                    color="primary"
+                    onClick={() => handleSyncToggle(index)}
+                  >
+                    {syncEnabled && masterMapIndex === index ?   <MyLocationIcon/> : <GpsNotFixedIcon/>}
+                  </Btn>
+                </div>
+                <ImageTitle>
+                  <Titles >
+                    <span style={{  padding: '5px' }}>{imageTitle}</span>
+                  </Titles>
+                </ImageTitle>
+                
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
-  };
+};
 
-  export default ComparePage;
-
-  const Bap = styled.div`
-      border: 1px solid white;
-  `
-  const TitleContainer = styled.div` 
-      position: absolute;
-      z-index:10;
-      width:50%;
-      height:100px;
-      bottom:0px;
-      display:flex;
-      align-items: end;
-      justify-content: center;
-    `
-
-    const TitleBox = styled.div` 
-        width:300px;
-        height:50px;
-        background-color:black;
-        border-radius:5px 5px 0px 0px;
-        display:flex;
-        align-items: center;
-        justify-content: center;
-        color:white;
-    `
+export default ComparePage;
 
 
-    const MapControlContainer = styled.div` 
-        position: absolute;
-        z-index:10;
-        width:250px;
-        height:80px; 
-        display:flex;
-        margin-left:20px;
-        align-items: center;
-        justify-content: center;
+const ImageTitle = styled.div`
+  position: absolute;
+  width:100%;
+  top: 1px;
+  color:white;
+  font-size:15px;
+  border-radius:0px 0px 5px 5px;
+  display:flex;
+  align-items: center;
+  justify-content: center;
 
-    `
+`
 
+const Titles = styled.div`
+  position: absolute; 
+  top: 0px;
+  width:max-contents;
+  z-index: 1000; 
+  background-color: black;
+  padding:5px;
+  color:white;
+  font-size:15px;
+  border-radius:0px 0px 5px 5px;
+  display:flex;
+  align-items: center;
+  justify-content: center;
+`
+
+
+
+
+
+const Btn = styled.div`
+background-color: white;
+border-radius:5px;
+width:25px;
+height:25px;
+display:flex;
+  align-items: center;
+  justify-content: center;
+`;
