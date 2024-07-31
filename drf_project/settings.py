@@ -27,11 +27,15 @@ SECRET_KEY = "django-insecure-v0(w91=lnx#d^^yh)z3@mlrunsq@@dmv9y()6^re5rl&6-*%+*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+
 ALLOWED_HOSTS = [
+    ".duckdns.org",
     "localhost",
     "175.45.204.163",
 ]
 
+# https 시 설정 
+#SECURE_SSL_REDIRECT = True
 
 # Application definition
 
@@ -47,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "covermap",
     "corsheaders",
+    "yongdam"
 
 ]
 
