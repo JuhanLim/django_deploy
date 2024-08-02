@@ -93,8 +93,11 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-
-# 모든 도메인을 허용하려면
+# Nginx가 HTTPS 요청을 HTTP로 프록시할 때 Django가 요청을 안전한 것으로 인식
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = ['https://dromii.duckdns.com']
+SESSION_COOKIE_SECURE = True
 
 
 ROOT_URLCONF = "drf_project.urls"

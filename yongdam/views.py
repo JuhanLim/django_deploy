@@ -77,9 +77,12 @@ class YongdamcadastraltargetViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-def api_v2_get_all_jobs(request):
+def api_v2_get_jobs(request):
+    pname_to_search = request.GET.get('pname')
+
     login_url = "http://api.dromii.com:8080/api/v2/login"
     jobs_url = "http://api.dromii.com:8080/api/v2/jobs"
+    projects_url = "http://api.dromii.com:8080/api/v2/projects"
     api_key = "YCmLIC7b8HT6xjd5rL2SPvuMdnYwiQEb"
     login_payload = {
         "email": "superuser@dromii.com",
@@ -112,17 +115,59 @@ def api_v2_get_all_jobs(request):
         jobs_data = jobs_response.json()
         listjobs = jobs_data.get('listjobs', [])
 
-        # 필요한 데이터만 추출
+        # pname 파라미터가 없을 경우 모든 job 데이터 반환
+        if not pname_to_search:
+            filtered_jobs_data = [
+                {
+                    'pcode': job.get('pcode'),
+                    'title': job.get('title'),
+                    'jcode': job.get('jcode')
+                }
+                for job in listjobs
+            ]
+            return JsonResponse(filtered_jobs_data, safe=False)
+
+        # 프로젝트 데이터를 가져옴
+        projects_headers = {
+            "apikey": api_key,
+            "Authorization": f"Bearer {access_token}"
+        }
+        projects_response = requests.get(projects_url, headers=projects_headers)
+        projects_response.raise_for_status()
+
+        projects_data = projects_response.json()
+        listprojects = projects_data.get('listprojects', [])
+
+        # pname으로 검색하여 해당 pcode를 찾음
+        matching_project = next((project for project in listprojects if project.get('pname') == pname_to_search), None)
+        if not matching_project:
+            return JsonResponse({'error': f'Project with pname {pname_to_search} not found'}, status=404)
+
+        pcode_to_search = matching_project.get('pcode')
+
+        # 필요한 데이터만 추출하고, pcode가 일치하는 job만 반환
         filtered_jobs_data = [
             {
                 'pcode': job.get('pcode'),
                 'title': job.get('title'),
                 'jcode': job.get('jcode')
             }
-            for job in listjobs
+            for job in listjobs if job.get('pcode') == pcode_to_search
         ]
 
         return JsonResponse(filtered_jobs_data, safe=False)
+
     except requests.RequestException as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+def api_get_v2_image(request, job_id):
+    url = f"http://res.dromii.com:3003/jobs/{job_id}/orthophoto/"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
+
+        return HttpResponse(response.content, content_type=response.headers['Content-Type'])
+    except requests.RequestException as e:
+        return HttpResponse(f'Error: {str(e)}', status=500)
