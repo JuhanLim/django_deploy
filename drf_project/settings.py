@@ -29,13 +29,22 @@ DEBUG = False
 
 
 ALLOWED_HOSTS = [
-    ".duckdns.org",
+    "dromii.duckdns.org",
     "localhost",
     "175.45.204.163",
+    "127.0.0.1",
 ]
 
 # https 시 설정 
 #SECURE_SSL_REDIRECT = True
+# Nginx 가 HTTPS 요청을 HTTP 로 프록시 할떄 Django 가 요청을 안전한 것으로 인식하게 함 
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# # HTTPS 를 통해서만 세션 쿠키전송 
+# SESSION_COOKIE_SECURE = True
+# # HTTPS 를 통해서만 CSRF 쿠키 전송 , 신뢰할 수 있는 출처 지정 
+# CSRF_COOKIE_SECURE = True
+# CSRF_TRUSTED_ORIGINS = ['https://example.com', 'https://www.example.com']
 
 # Application definition
 
@@ -51,8 +60,8 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "covermap",
     "corsheaders",
-    "yongdam"
-
+    "yongdam",
+    "django_filters"
 ]
 
 MIDDLEWARE = [
@@ -67,12 +76,13 @@ MIDDLEWARE = [
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://175.45.204.163:3000",
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-#     # 이게 아니라 밑에게 맞는듯 
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://175.45.204.163",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://dromii.duckdns.org"
+    # 이게 아니라 밑에게 맞는듯 
+]
 
 CORS_ORIGIN_WHITELIST = [
     "http://175.45.204.163:8080",

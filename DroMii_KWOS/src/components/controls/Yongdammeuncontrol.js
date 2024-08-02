@@ -1,4 +1,4 @@
-  import React, { useState, useContext } from 'react';
+  import React, { useState, useEffect } from 'react';
   import styled from 'styled-components';
   // bootstrap import
 
@@ -26,6 +26,8 @@
   import Button from '@mui/material/Button';
   import { useNavigate } from 'react-router-dom';
 
+  import axios from 'axios';
+
   import tag1 from '../../assets/tag1.png'
   import tag2 from '../../assets/tag2.png'
   import tag3 from '../../assets/tag3.png'
@@ -34,6 +36,7 @@
   // apexcharts import
   // .env import
   const geoserverUrl = process.env.REACT_APP_GEOSERVER_URI;
+  
 
 
   // k워터 중분류 임시 데이터
@@ -610,6 +613,46 @@
 
   const tiff2023 = filterByYear('2023');
   const tiff2024 = filterByYear('2024');
+
+  const apiKey = 'd54ed7be2166b4c8e8ffd5d6d223f28a'; // 여기에 API 키 입력
+      const city = 'Yongdam-myeon';
+      
+      // React Hook을 조건 없이 최상단에서 호출
+      const [weatherData, setWeatherData] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+    
+      const fetchWeatherData = async () => {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+    
+        try {
+          const response = await axios.get(url);
+          console.log(response.data);
+          setWeatherData(response.data); // 날씨 정보를 상태에 저장
+        } catch (error) {
+          console.error('Error fetching weather data:', error.response ? error.response.data : error.message);
+        } finally {
+          setIsLoading(false); // 로딩 상태를 false로 설정
+        }
+      };
+    
+      useEffect(() => {
+        fetchWeatherData(); // 컴포넌트가 마운트될 때 날씨 데이터 가져오기
+      }, []);
+    
+      // 조건부 로직을 훅 호출 아래에 배치
+      if (isLoading) {
+        return <div>Loading...</div>; // 데이터가 아직 로딩 중일 때 표시
+      }
+    
+      if (!weatherData) {
+        return <div>Error fetching weather data.</div>; // 데이터 로드에 실패했을 때 표시
+      }
+    
+      const { temp, temp_min, temp_max } = weatherData.main;
+      const {icon} = weatherData.weather[0];
+      const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+
+
       
 
 
@@ -633,7 +676,7 @@
                               color="primary" 
                               onClick={handleCompare}
                               disabled={checked.length < 2 || checked.length > 10}
-                              style={{marginLeft:'105px'}}
+                              style={{marginLeft:'90px'}}
                             >
                               비교하기
                             </Button>
@@ -673,7 +716,7 @@
         color="primary" 
         onClick={handleDroneCompare}
         disabled={checked.length < 2 || checked.length > 10}
-        style={{ marginLeft: '105px' }}
+        style={{ marginLeft: '90px' }}
       >
         비교하기
       </Button>
@@ -708,6 +751,21 @@
               </TabContext>
             </Box>
           </MeunContainer>
+          <WeatherBox>
+       <WeatherIcon>
+        <img src={iconUrl} style={{width:"70%", height:"100%"}}/>
+       </WeatherIcon>
+       <WeatherText>현재온도 {temp.toFixed(1)}°C 
+            {/* (
+            <span style={{ color: '#4176FF', marginLeft:'3px', marginRight:'5px'}}>
+              {temp_min.toFixed(1)}°C
+            </span> / 
+            <span style={{ color: '#FF4848', marginLeft:'5px', marginRight:'3px' }}>
+              {temp_max.toFixed(1)}°C
+            </span>
+            ) */}
+            </WeatherText>
+     </WeatherBox>
         </>
   )
   }
@@ -721,75 +779,36 @@
         display:flex;
       `
 
-      const ItemBox = styled.div`
-        position:absolute;
-        width:180px;
-        height:250px;
-        background-color:white;
-        left:355px;
-        z-index:10000;
-        top:80px;
-        border-radius:5px;
-      `
-      const ItemName = styled.div`
-        font-size:13px;
-        background-color: #2B7DF7;
-        width:100%;
-        height:35px;
+      const WeatherBox = styled.div`
+        position: absolute;
+        top:10px;
+        background-color: white;
+        left: 400px;
+        z-index:100000;
+        width: 180px;
+        height: 40px;
+        border-radius:50px;
         display:flex;
-        align-items:center;
-        padding-left:10px;
-        border-radius: 5px 5px 0px 0px;
-        color:white;
-        font-style: bold;
-      `
-      const Items = styled.div`
-        width:100%;
-        height:35px;
-        display:flex;
-        align-items:center;
-      `
-      const ItemTitle = styled.div`
-        height:100%;
-        width:85%;
-        display:flex;
-        align-items:center;
-        padding-left:10px;
-        font-size:12px;
-      `
-      const ItemImg = styled.div`
-        display:flex;
-        align-items:center;
-        justify-contents:center;
+        align-items: center;
+        justify-content: center;
+        opacity:0.9;
       `
 
-      const ItemsBox = styled.div`
-        position:absolute;
-        width:250px;
-        height:350px;
-        background-color:white;
-        left:540px;
-        z-index:10000;
-        top:80px;
-        border-radius:5px;
-        overflow:scroll;
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-        &::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera */
-        }  
+      const WeatherIcon = styled.div`
+          width:55px;
+          height:100%;
+          display:flex;
+          align-items: center;
+          justify-content: center;
       `
 
-      const DataItems = styled.div`
-        width:100%;
-        height:max-contents;
-      `;
-      const DataItem = styled.div`
-        width:100%;
-        height:max-contents;
-        font-size:12px;
-        padding-left:15px;
-      `;
+  const WeatherText = styled.div`
+      width:125px;
+      height:100%;
+      display:flex;
+      align-items: center;
+      font-size:13px;
+  `
 
 
       
