@@ -1,13 +1,17 @@
 from rest_framework import viewsets
 from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Yongdamcadastralall , Yongdamcadastraltarget
-from .filters import YongdamcadastralallFilter , YongdamcadastraltargetFilter
-from .serializers import YongdamcadastralallSerializer , YongdamcadastraltargetSerializer
+from .models import Yongdamcadastralall, Yongdamcadastraltarget
+from .filters import YongdamcadastralallFilter, YongdamcadastraltargetFilter
+from .serializers import YongdamcadastralallSerializer, YongdamcadastraltargetSerializer
 import requests
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.core.cache import cache
+import logging
+
+logger = logging.getLogger('yongdam')
+
 
 class YongdamcadastralallViewSet(viewsets.ModelViewSet):
     queryset = Yongdamcadastralall.objects.all()
@@ -15,14 +19,16 @@ class YongdamcadastralallViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = YongdamcadastralallFilter
 
-    def get_queryset(self): # ViewSet 이 반환할 쿼리셋을 커스터마이징 
+    def get_queryset(self):  # ViewSet 이 반환할 쿼리셋을 커스터마이징
         queryset = super().get_queryset()
-        jibun = self.request.query_params.get('jibun') # 요청의 쿼리 파라미터에서 jibun 값을 가져옴 
+        jibun = self.request.query_params.get(
+            'jibun')  # 요청의 쿼리 파라미터에서 jibun 값을 가져옴
         if jibun:
-            jibun_list = jibun.split(',') # 지번값이 존재하면 , 쉼표로 분리해 리스트로 만듬
-            queryset = queryset.filter(jibun__in=jibun_list) # jibun 값이 리스트에 포함된 레코드를 필터링 
-            # jibun_ _ in : 주어진 리스트나 튜플에 해당 필드값이 포함되는 여부를 필터링 할때 사용 
-            # ex filter(jibun__in =['value1','value2']) 는 jibun 필드가 'value1 또는 'value2' 인 레코드를 필터링 
+            jibun_list = jibun.split(',')  # 지번값이 존재하면 , 쉼표로 분리해 리스트로 만듬
+            # jibun 값이 리스트에 포함된 레코드를 필터링
+            queryset = queryset.filter(jibun__in=jibun_list)
+            # jibun_ _ in : 주어진 리스트나 튜플에 해당 필드값이 포함되는 여부를 필터링 할때 사용
+            # ex filter(jibun__in =['value1','value2']) 는 jibun 필드가 'value1 또는 'value2' 인 레코드를 필터링
         return queryset
 
     # def create(self, request, *args, **kwargs):
@@ -32,10 +38,10 @@ class YongdamcadastralallViewSet(viewsets.ModelViewSet):
     #     else:
     #         # 단일 데이터인 경우
     #         serializer = self.get_serializer(data=request.data)
-        
+
     #     serializer.is_valid(raise_exception=True)
     #     self.perform_create(serializer)
-        
+
     #     if isinstance(request.data, list):
     #         # 여러 데이터를 생성한 경우, 각 레코드의 상세 정보로 응답
     #         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -44,20 +50,23 @@ class YongdamcadastralallViewSet(viewsets.ModelViewSet):
     #         headers = self.get_success_headers(serializer.data)
     #         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 class YongdamcadastraltargetViewSet(viewsets.ModelViewSet):
     queryset = Yongdamcadastraltarget.objects.all()
     serializer_class = YongdamcadastraltargetSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = YongdamcadastraltargetFilter
 
-    def get_queryset(self): # ViewSet 이 반환할 쿼리셋을 커스터마이징 
+    def get_queryset(self):  # ViewSet 이 반환할 쿼리셋을 커스터마이징
         queryset = super().get_queryset()
-        jibun = self.request.query_params.get('jibun') # 요청의 쿼리 파라미터에서 jibun 값을 가져옴 
+        jibun = self.request.query_params.get(
+            'jibun')  # 요청의 쿼리 파라미터에서 jibun 값을 가져옴
         if jibun:
-            jibun_list = jibun.split(',') # 지번값이 존재하면 , 쉼표로 분리해 리스트로 만듬
-            queryset = queryset.filter(jibun__in=jibun_list) # jibun 값이 리스트에 포함된 레코드를 필터링 
-            # jibun_ _ in : 주어진 리스트나 튜플에 해당 필드값이 포함되는 여부를 필터링 할때 사용 
-            # ex filter(jibun__in =['value1','value2']) 는 jibun 필드가 'value1 또는 'value2' 인 레코드를 필터링 
+            jibun_list = jibun.split(',')  # 지번값이 존재하면 , 쉼표로 분리해 리스트로 만듬
+            # jibun 값이 리스트에 포함된 레코드를 필터링
+            queryset = queryset.filter(jibun__in=jibun_list)
+            # jibun_ _ in : 주어진 리스트나 튜플에 해당 필드값이 포함되는 여부를 필터링 할때 사용
+            # ex filter(jibun__in =['value1','value2']) 는 jibun 필드가 'value1 또는 'value2' 인 레코드를 필터링
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -67,10 +76,10 @@ class YongdamcadastraltargetViewSet(viewsets.ModelViewSet):
         else:
             # 단일 데이터인 경우
             serializer = self.get_serializer(data=request.data)
-        
+
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        
+
         if isinstance(request.data, list):
             # 여러 데이터를 생성한 경우, 각 레코드의 상세 정보로 응답
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -78,6 +87,7 @@ class YongdamcadastraltargetViewSet(viewsets.ModelViewSet):
             # 단일 데이터를 생성한 경우, 상세 정보로 응답
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 def api_v2_get_jobs(request):
     pname_to_search = request.GET.get('pname')
@@ -96,15 +106,36 @@ def api_v2_get_jobs(request):
     }
 
     try:
+
+        #access_token = cache.get('access_token')
+        access_token = cache.get('access_token')
+        logger.info("access_token 없음, 새로운 토큰 요청 시도")
+
         # 로그인 요청을 보내서 토큰을 받음
-        login_response = requests.post(login_url, json=login_payload, headers=headers)
-        login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
+        if access_token is None:
+            login_response = requests.post(
+                login_url, json=login_payload, headers=headers)
 
-        login_data = login_response.json()
-        access_token = login_data.get('access')
+            login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
 
-        if not access_token:
-            return JsonResponse({'error': 'Access token not found in login response'}, status=500)
+            login_data = login_response.json()
+
+            access_token = login_data.get('access')
+
+            if not access_token:
+                logger.error("access_token 가져올 수 없음")
+                
+                return JsonResponse({'error': 'Access token not found in login response'}, status=500)
+            # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
+            try: 
+                cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
+                logger.info(f"새로운 access_token 캐싱: {access_token}")
+            except Exception as e:
+                logger.error(f"캐시에 access_token 저장 중 오류 발생: {str(e)}")
+
+        else:
+
+            logger.info(f"캐시에서 access_token 가져옴: {access_token}")
 
         # 토큰을 사용하여 실제 데이터를 가져옴
         jobs_headers = {
@@ -127,21 +158,23 @@ def api_v2_get_jobs(request):
                 }
                 for job in listjobs
             ]
-            return JsonResponse(filtered_jobs_data, safe=False)
+            return JsonResponse({'access_token': access_token, 'jobs': filtered_jobs_data}, safe=False)
 
         # 프로젝트 데이터를 가져옴
         projects_headers = {
             "apikey": api_key,
             "Authorization": f"Bearer {access_token}"
         }
-        projects_response = requests.get(projects_url, headers=projects_headers)
+        projects_response = requests.get(
+            projects_url, headers=projects_headers)
         projects_response.raise_for_status()
 
         projects_data = projects_response.json()
         listprojects = projects_data.get('listprojects', [])
 
         # pname으로 검색하여 해당 pcode를 찾음
-        matching_project = next((project for project in listprojects if project.get('pname') == pname_to_search), None)
+        matching_project = next((project for project in listprojects if project.get(
+            'pname') == pname_to_search), None)
         if not matching_project:
             return JsonResponse({'error': f'Project with pname {pname_to_search} not found'}, status=404)
 
@@ -152,12 +185,13 @@ def api_v2_get_jobs(request):
             {
                 'pcode': job.get('pcode'),
                 'title': job.get('title'),
-                'jcode': job.get('jcode')
+                'jcode': job.get('jcode'),
+                'lonlat': job.get('lonlat')
             }
             for job in listjobs if job.get('pcode') == pcode_to_search
         ]
 
-        return JsonResponse(filtered_jobs_data, safe=False)
+        return JsonResponse({'access_token': access_token, 'jobs': filtered_jobs_data}, safe=False)
 
     except requests.RequestException as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -169,35 +203,77 @@ def api_get_v2_image(request, job_id):
     }
     return render(request, 'yongdam/map.html', context)
 
+
 def test(request):
-#def get_access_token():
+
+    logger.info("test 호출")
+
     login_url = "http://api.dromii.com:8080/api/v2/login"
+
     api_key = "YCmLIC7b8HT6xjd5rL2SPvuMdnYwiQEb"
+
     login_payload = {
+
         "email": "superuser@dromii.com",
+
         "password": "1234"
+
     }
+
     headers = {
+
         "Content-Type": "application/json",
+
         "apikey": api_key
+
     }
 
     try:
+
+        #access_token = cache.get('access_token')
+        access_token = cache.get('access_token')
+        logger.info("access_token 없음, 새로운 토큰 요청 시도")
+
         # 로그인 요청을 보내서 토큰을 받음
-        login_response = requests.post(login_url, json=login_payload, headers=headers)
-        login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
+        if access_token is None:
+            login_response = requests.post(
+                login_url, json=login_payload, headers=headers)
 
-        login_data = login_response.json()
-        access_token = login_data.get('access')
+            login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
 
-        if not access_token:
-            logger.error("access_token 가져올 수 없음")
-            return None
+            login_data = login_response.json()
 
-        # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
-        cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
-        return access_token
+            access_token = login_data.get('access')
+
+            if not access_token:
+                logger.error("access_token 가져올 수 없음")
+                
+                return JsonResponse({'error': 'Access token not found in login response'}, status=500)
+            # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
+            try: 
+                cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
+                logger.info(f"새로운 access_token 캐싱: {access_token}")
+            except Exception as e:
+                logger.error(f"캐시에 access_token 저장 중 오류 발생: {str(e)}")
+
+        else:
+
+            logger.info(f"캐시에서 access_token 가져옴: {access_token}")
+
+
+
+            # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
+
+        return JsonResponse({'access_token': access_token}, safe=False)
 
     except requests.RequestException as e:
-        logger.error(f"Request exception: {str(e)}")
-        return None
+
+        logger.error(f"토큰 획득 실패: {str(e)}")
+
+        return JsonResponse({'error': 'Failed to obtain access token', 'message': str(e)}, status=500)
+
+    except Exception as e:
+
+        logger.error(f"예상치 못한 오류 발생: {str(e)}")
+
+        return JsonResponse({'error': 'Unexpected error', 'message': str(e)}, status=500)
