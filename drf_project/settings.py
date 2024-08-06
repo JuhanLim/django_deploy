@@ -74,17 +74,29 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# 캐싱 설정 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'login-token',
+    }
+}
+
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
+    "https://dromii.duckdns.org",
     "http://175.45.204.163",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://dromii.duckdns.org"
+    
     # 이게 아니라 밑에게 맞는듯 
 ]
 
 CORS_ORIGIN_WHITELIST = [
+    "https://dromii.duckdns.org",
     "http://175.45.204.163:8080",
     "http://175.45.204.163:8080/geoserver",
     "http://175.45.204.163:3000",
@@ -105,7 +117,7 @@ ROOT_URLCONF = "drf_project.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ['client'],
+        "DIRS": [BASE_DIR / 'templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -186,3 +198,22 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/root/django_deploy/log/django_error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}

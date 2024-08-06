@@ -9,5 +9,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('project-job/',views.api_v2_get_jobs,name='v2_get_filtered_jobs'),
     path('get-v2image/<str:job_id>/',views.api_get_v2_image,name='v2_get_image'),
+    path('test/',views.test,name='test'),
 ]
 

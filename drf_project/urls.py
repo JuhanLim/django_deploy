@@ -27,8 +27,8 @@ from my_app.views import HelloView
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("hello/", HelloView.as_view(), name="hello"),
-    path("covermap/", include('covermap.urls')),
-    path("yongdam/", include('yongdam.urls')),
+    path("api/covermap/", include('covermap.urls')),
+    path("api/yongdam/", include('yongdam.urls')),
     #path("tables/", get_table_list.as_view(), name="get_table_list"),
     # path("", include(router.urls)),
 

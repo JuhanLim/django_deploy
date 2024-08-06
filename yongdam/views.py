@@ -6,6 +6,8 @@ from .filters import YongdamcadastralallFilter , YongdamcadastraltargetFilter
 from .serializers import YongdamcadastralallSerializer , YongdamcadastraltargetSerializer
 import requests
 from django.http import JsonResponse
+from django.shortcuts import render
+from django.core.cache import cache
 
 class YongdamcadastralallViewSet(viewsets.ModelViewSet):
     queryset = Yongdamcadastralall.objects.all()
@@ -162,12 +164,40 @@ def api_v2_get_jobs(request):
 
 
 def api_get_v2_image(request, job_id):
-    url = f"http://res.dromii.com:3003/jobs/{job_id}/orthophoto/"
-    
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
+    context = {
+        'job_id': job_id
+    }
+    return render(request, 'yongdam/map.html', context)
 
-        return HttpResponse(response.content, content_type=response.headers['Content-Type'])
+def test(request):
+#def get_access_token():
+    login_url = "http://api.dromii.com:8080/api/v2/login"
+    api_key = "YCmLIC7b8HT6xjd5rL2SPvuMdnYwiQEb"
+    login_payload = {
+        "email": "superuser@dromii.com",
+        "password": "1234"
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "apikey": api_key
+    }
+
+    try:
+        # 로그인 요청을 보내서 토큰을 받음
+        login_response = requests.post(login_url, json=login_payload, headers=headers)
+        login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
+
+        login_data = login_response.json()
+        access_token = login_data.get('access')
+
+        if not access_token:
+            logger.error("access_token 가져올 수 없음")
+            return None
+
+        # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
+        cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
+        return access_token
+
     except requests.RequestException as e:
-        return HttpResponse(f'Error: {str(e)}', status=500)
+        logger.error(f"Request exception: {str(e)}")
+        return None

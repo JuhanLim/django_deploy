@@ -1,0 +1,139 @@
+# https 완료 . 다른건 다 작동하는데 v2 서버의 api 호출을 할때 v2 서버가 http 이므로 Mixed Content 가 발생한다. 
+# -> v2 서버를 https 로 변경하긴 어려우므로 , 일단 Ncloud 서버를 http 로 유지하되 
+# -> 나중에 https 가 다시 필요하면 CSP 를 통해서 설정하기 
+
+server {
+    listen 80;
+    server_name 175.45.204.163 dromii.duckdns.org;
+    return 301 https://dromii.duckdns.org$request_uri;
+}
+
+server {
+  # 80 port로 서버 오픈
+  listen 443 ssl; # managed by Certbot
+  server_name dromii.duckdns.org;
+
+  ssl_certificate /etc/letsencrypt/live/dromii.duckdns.org/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/dromii.duckdns.org/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+  add_header X-Frame-Options SAMEORIGIN;
+  add_header X-Content-Type-Options nosniff;
+  add_header X-XSS-Protection "1; mode=block";
+
+  root /root/django_deploy/DroMii_KWOS/build;
+  index index.html index.htm;
+
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log;
+
+  location /admin/ { 
+    proxy_pass http://unix:/root/django_deploy/drf_project.sock;
+    add_header Cross-Origin-Opener-Policy same-origin;    #corp 설정 
+    add_header Cross-Origin-Embedder-Policy require-corp;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  
+  location /api/ {
+    proxy_pass http://unix:/root/django_deploy/drf_project.sock;
+    add_header Cross-Origin-Opener-Policy same-origin;
+    add_header Cross-Origin-Embedder-Policy require-corp;
+    add_header 'Access-Control-Allow-Origin' '*';
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+  #location /covermap/ { 
+  #  proxy_pass http://unix:/root/django_deploy/drf_project.sock;
+  #  add_header Cross-Origin-Opener-Policy same-origin;
+  #  add_header Cross-Origin-Embedder-Policy require-corp;
+  #  proxy_set_header Host $host;
+  #  proxy_set_header X-Real-IP $remote_addr;
+  #  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #  proxy_set_header X-Forwarded-Proto $scheme;
+#
+  #}
+  #location /yongdam/ { 
+  #  proxy_pass http://unix:/root/django_deploy/drf_project.sock;
+  #  add_header Cross-Origin-Opener-Policy same-origin;
+  #  add_header Cross-Origin-Embedder-Policy require-corp;
+  #  add_header 'Access-Control-Allow-Origin' '*';
+  #  add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+  #  add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization';
+  #  proxy_set_header Host $host;
+  #  proxy_set_header X-Real-IP $remote_addr;
+  #  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #  proxy_set_header X-Forwarded-Proto $scheme;
+
+  #}
+
+  location / { 
+    try_files $uri $uri/ =404;
+    #try_files $uri $uri/ /index.html; -> nginx 기본 인덱스로가서 주석처리함 
+  }
+   
+  # /images 경로로 요청이 들어왔을 때 연결되는 경로
+
+  location /images/ {
+	  root /root/django_deploy/static/;
+  }
+
+  #static files 
+  location /static/ {
+	  root /root/django_deploy/DroMii_KWOS/build/; # DroMii_KWOS/build/;
+    add_header 'Access-Control-Allow-Origin' '*';
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept, Authorization';
+    add_header Cross-Origin-Opener-Policy same-origin;  # 다른곳에서 CORS 인증 오류 안뜨도록 
+    add_header Cross-Origin-Embedder-Policy require-corp;
+    #try_files $uri $uri/ /root/django_deploy/DroMii_KWOS/build/; # $uri;
+  }
+
+    # krpano files
+  location /krpano/ {
+    root /root/django_deploy/DroMii_KWOS/build/;
+  }
+
+# alias 는 
+
+    # GeoServer를 위한 location 블록
+  location /geoserver/ {
+          proxy_pass http://175.45.204.163:8080/geoserver/;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+  }
+      # React 애플리케이션을 위한 location 블록
+  # location /Mappage/ {
+  #   proxy_pass http://175.45.204.163:3000/Mappage;
+  #   proxy_set_header Host $host;
+  #   proxy_set_header X-Real-IP $remote_addr;
+  #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #   proxy_set_header X-Forwarded-Proto $scheme;
+  # }
+  # location / {
+  #   proxy_pass http://175.45.204.163:3000/;
+  #   proxy_set_header Host $host;
+  #   proxy_set_header X-Real-IP $remote_addr;
+  #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  #   proxy_set_header X-Forwarded-Proto $scheme;
+  # }  
+}
+
+#server {
+  #listen 80;
+  #server_name 175.45.204.163 dromii.duckdns.org;
+	#location / {
+  #      return 301 https://dromii.duckdns.org$request_uri;
+  #}
+#}

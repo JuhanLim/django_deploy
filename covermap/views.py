@@ -33,7 +33,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 def get_layers(request): # 레이어 목록 가져오는 뷰 
-    geoserver_url = 'http://175.45.204.163/geoserver/rest/layers'
+    geoserver_url = 'http://175.45.204.163:8080/geoserver//rest/layers'
     response = requests.get(geoserver_url, 
                             auth=HTTPBasicAuth(settings.GEOSERVER_USER,
                                                settings.GEOSERVER_PASSWORD,
