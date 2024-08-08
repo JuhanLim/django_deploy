@@ -1,106 +1,100 @@
-
-// import React, { useEffect, useRef, useState } from 'react';
-// import Map from 'ol/Map';
-// import View from 'ol/View';
-// import TileLayer from 'ol/layer/Tile';
-// import XYZ from 'ol/source/XYZ';
-// import { fromLonLat } from 'ol/proj';
-
-// const ComparePage = () => {
-//   const mapRef = useRef(null);
-
-//   useEffect(() => {
-//     const map = new Map({
-//       target: 'map',
-//       layers: [
-//         new TileLayer({
-//           source: new XYZ({
-//             url: 'http://175.45.204.163/api/yongdam/get-v2image/j_261',
-//             //url: 'http://res.dromii.com:3003/jobs/j_270/orthophoto',
-//           }),
-//         }),
-//       ],
-//       view: new View({
-//         center:fromLonLat([127.501309672, 35.879741568]) ,
-//         zoom: 12,
-//       }),
-//     });
-
-//     mapRef.current = map;
-
-//     return () => {
-//       map.setTarget(null);
-//     };
-//   }, []);
-
-//   return (
-//     <div style={{ width: '100%', height: '100vh' }}>
-//       <div id="map" style={{ width: '100%', height: '100%' }} />
-//     </div>
-//   );
-// };
-
-// export default ComparePage;
-
-
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
-import { fromLonLat } from 'ol/proj';
-import { get as getProjection } from 'ol/proj';
-import TileGrid from 'ol/tilegrid/TileGrid';
+import { fromLonLat, transformExtent } from 'ol/proj';
+
+const API_BASE_URL = 'http://175.45.204.163/api/yongdam';
 
 const TestPage = () => {
-  const mapRef = useRef(null); // 지도 DOM 엘리먼트 참조
+  const mapRef = useRef(null);
+  const [mapConfig, setMapConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const initialize = () => {
-      const projection = getProjection('EPSG:3857'); // 사용하고자 하는 투영법 설정
-      const extent = projection.getExtent();
-      const tileGrid = new TileGrid({
-        extent,
-        resolutions: [
-          // 여기에 각 줌 레벨에 대한 해상도 값을 추가
-          78271.51696402048, 39135.75848201024, 19567.87924100512,
-          9783.93962050256, 4891.96981025128, 2445.98490512564,
-          1222.99245256282, 611.49622628141, 305.748113140705,
-          152.8740565703525, 76.43702828517625, 38.21851414258813,
-          19.109257071294063, 9.554628535647032, 4.777314267823516,
-          2.388657133911758, 1.194328566955879, 0.5971642834779395,
-          0.29858214173896974, 0.14929107086948487, 0.07464553543474244,
-          0.03732276771737122, 0.01866138385868561, 0.009330691929342805
-        ],
-        tileSize: 256
-      });
+  const fetchMapConfig = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-xml/j_261/`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(data, 'application/xml');
 
-      const map = new Map({
-        target: mapRef.current,
-        layers: [
-          new TileLayer({
-            source: new XYZ({
-              url: `http://res.dromii.com:3003/jobs/j_261/orthophoto/{z}/{x}/{y}.png`,
-              tileGrid: tileGrid, // 타일 그리드를 설정
-              minZoom: 16,
-              maxZoom: 23
-            })
-          })
-        ],
-        view: new View({
-          center: fromLonLat([127.501, 35.8797]), // 지도 중심 설정
-          zoom: 16, // 초기 줌 레벨 설정
-          projection: 'EPSG:3857' // EPSG:3857 투영법을 사용
-        })
-      });
-    };
+      const tileSets = xmlDoc.getElementsByTagName('TileSet');
+      const zoomLevels = Array.from(tileSets).map(tileSet => parseInt(tileSet.getAttribute('order'), 10));
+      const minZoom = Math.min(...zoomLevels);
+      const maxZoom = Math.max(...zoomLevels);
 
-    initialize(); // OpenLayers 초기화
+      const srs = xmlDoc.getElementsByTagName('SRS')[0].textContent;
+      const boundingBox = xmlDoc.getElementsByTagName('BoundingBox')[0];
+      const extents = [
+        parseFloat(boundingBox.getAttribute('minx')),
+        parseFloat(boundingBox.getAttribute('miny')),
+        parseFloat(boundingBox.getAttribute('maxx')),
+        parseFloat(boundingBox.getAttribute('maxy')),
+      ];
+
+      setMapConfig({ minZoom, maxZoom, extents, srs });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return <div id="map" ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
+  useEffect(() => {
+    fetchMapConfig();
+  }, [fetchMapConfig]);
+
+  useEffect(() => {
+    if (!mapConfig) return;
+
+    const { minZoom, maxZoom, extents, srs } = mapConfig;
+
+    // extents를 EPSG:3857로 변환
+    const extentsConverted = transformExtent(extents, srs, 'EPSG:3857');
+
+    // TMS 소스 생성
+    const tmsSource = new XYZ({
+      url: `${API_BASE_URL}/get_v2_image/j_261/orthophoto/{z}/{x}/{-y}.png`,
+      minZoom: minZoom,
+      maxZoom: maxZoom,
+      tilePixelRatio: 1,
+      attributions: '© Your Attribution'
+    });
+
+    // TMS 레이어 생성
+    const tmsLayer = new TileLayer({
+      source: tmsSource
+    });
+
+    // 맵 생성
+    const map = new Map({
+      target: mapRef.current,
+      layers: [tmsLayer],
+      view: new View({
+        center: fromLonLat([(extents[0] + extents[2]) / 2, (extents[1] + extents[3]) / 2]), // 중심점 계산
+        zoom: minZoom,
+        minZoom: minZoom,
+        maxZoom: maxZoom,
+        extent: extentsConverted
+      })
+    });
+
+    // extents로 지도를 맞춤
+    map.getView().fit(extentsConverted);
+
+    return () => {
+      map.setTarget(null);
+    };
+  }, [mapConfig]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
 };
 
 export default TestPage;

@@ -84,27 +84,28 @@ CACHES = {
 }
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+#CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "https://dromii.duckdns.org",
+    "http://dromii.duckdns.org",
     "http://175.45.204.163",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     
-    # 이게 아니라 밑에게 맞는듯 
-]
 
-CORS_ORIGIN_WHITELIST = [
-    "https://dromii.duckdns.org",
-    "http://175.45.204.163:8080",
-    "http://175.45.204.163:8080/geoserver",
-    "http://175.45.204.163:3000",
-    "http://175.45.204.163:8000",
-    "http://175.45.204.163:80",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
 ]
+CORS_ALLOW_CREDENTIALS = True
+# CORS_ORIGIN_WHITELIST = [
+#     "https://dromii.duckdns.org",
+#     "http://175.45.204.163:8080",
+#     "http://175.45.204.163:8080/geoserver",
+#     "http://175.45.204.163:3000",
+#     "http://175.45.204.163:8000",
+#     "http://175.45.204.163:80",
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
 # Nginx가 HTTPS 요청을 HTTP로 프록시할 때 Django가 요청을 안전한 것으로 인식
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = True

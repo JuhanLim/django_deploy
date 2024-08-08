@@ -5,7 +5,7 @@ from .models import Yongdamcadastralall, Yongdamcadastraltarget
 from .filters import YongdamcadastralallFilter, YongdamcadastraltargetFilter
 from .serializers import YongdamcadastralallSerializer, YongdamcadastraltargetSerializer
 import requests
-from django.http import JsonResponse
+from django.http import JsonResponse , HttpResponse
 from django.shortcuts import render
 from django.core.cache import cache
 import logging
@@ -273,75 +273,82 @@ def get_coordinate(request, job_id):
         logger.error(f"Unexpected error: {str(e)}")
         return JsonResponse({'error': 'Unexpected error', 'details': str(e)}, status=500)
 
+# 좌표 반환 api 
+def get_xml(request, job_id):
+    logger.info(f"get_xml api 실행") 
+    login_url = "http://api.dromii.com:8080/api/v2/login"
+    xml_url = f"http://res.dromii.com:3003/{job_id}/ortho"
+    api_key = "YCmLIC7b8HT6xjd5rL2SPvuMdnYwiQEb"
+    login_payload = {
+        "email": "superuser@dromii.com",
+        "password": "1234"
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "apikey": api_key
+    }
+
+    try:
+        access_token = cache.get('access_token')
+
+        # 로그인 요청을 보내서 토큰을 받음
+        if access_token is None:
+            login_response = requests.post(login_url, json=login_payload, headers=headers)
+            login_response.raise_for_status()
+
+            login_data = login_response.json()
+            access_token = login_data.get('access')
+            logger.info("access_token 없음, 새로운 토큰 요청 시도")
+
+            if not access_token:
+                logger.error("access_token 가져올 수 없음")
+                return JsonResponse({'error': 'Access token not found in login response'}, status=500)
+            
+            # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
+            try: 
+                cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
+                logger.info(f"새로운 access_token 캐싱: {access_token}")
+            except Exception as e:
+                logger.error(f"캐시에 access_token 저장 중 오류 발생: {str(e)}")
+        else:
+            logger.info(f"캐시에서 access_token 가져옴: {access_token}")
+
+        # 토큰을 사용하여 XML 데이터를 가져옴
+        xml_headers = {
+            "apikey": api_key,
+            "Authorization": f"Bearer {access_token}"
+        }
+        xml_response = requests.get(xml_url, headers=xml_headers)
+        xml_response.raise_for_status()
+
+        # XML 데이터를 반환
+        return HttpResponse(xml_response.content, content_type='application/xml')
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed: {str(e)}")
+        return JsonResponse({'error': 'Request failed', 'details': str(e)}, status=500)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return JsonResponse({'error': 'Unexpected error', 'details': str(e)}, status=500)
+
+def get_v2_image(request, job_id, z, x, y):
+    logger.info(f"get_tile_image api 실행: z={z}, x={x}, y={y}")
+    image_url = f"http://res.dromii.com:3003/jobs/{job_id}/orthophoto/{z}/{x}/{y}.png"
+    logger.info(f"Requesting image from URL: {image_url}")
+
+    try:
+        image_response = requests.get(image_url)
+        image_response.raise_for_status()
+        logger.info("Image fetched successfully.")
+        return HttpResponse(image_response.content, content_type='image/png')
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed: {str(e)}")
+        return JsonResponse({'error': 'Request failed', 'details': str(e)}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return JsonResponse({'error': 'Unexpected error', 'details': str(e)}, status=500)
+
 # def test(request,job_id):
-    
-#     login_url = "http://api.dromii.com:8080/api/v2/login"
-#     coordinate_url = f"http://api.dromii.com:8080/api/v2/jobs/info/{job_id}"
-#     api_key = "YCmLIC7b8HT6xjd5rL2SPvuMdnYwiQEb"
-#     login_payload = {
-#         "email": "superuser@dromii.com",
-#         "password": "1234"
-#     }
-#     headers = {
-#         "Content-Type": "application/json",
-#         "apikey": api_key
-#     }
 
-#     try:
-
-#         #access_token = cache.get('access_token')
-#         access_token = cache.get('access_token')
-#         logger.info("access_token 없음, 새로운 토큰 요청 시도")
-
-#         # 로그인 요청을 보내서 토큰을 받음
-#         if access_token is None:
-#             login_response = requests.post(
-#                 login_url, json=login_payload, headers=headers)
-
-#             login_response.raise_for_status()  # HTTP 에러가 발생하면 예외를 일으킵니다.
-
-#             login_data = login_response.json()
-
-#             access_token = login_data.get('access')
-
-#             if not access_token:
-#                 logger.error("access_token 가져올 수 없음")
-                
-#                 return JsonResponse({'error': 'Access token not found in login response'}, status=500)
-#             # 토큰을 캐시에 저장하고 만료 시간을 24시간으로 설정
-#             try: 
-#                 cache.set('access_token', access_token, timeout=86400)  # 24시간 = 86400초
-#                 logger.info(f"새로운 access_token 캐싱: {access_token}")
-#             except Exception as e:
-#                 logger.error(f"캐시에 access_token 저장 중 오류 발생: {str(e)}")
-
-#         else:
-
-#             logger.info(f"캐시에서 access_token 가져옴: {access_token}")
-
-#         jobs_headers = {
-#             "apikey": api_key,
-#             "Authorization": f"Bearer {access_token}"
-#         }
-#         jobs_response = requests.get(coordinate_url, headers=jobs_headers)
-#         jobs_response.raise_for_status()
-#         jobs_data = jobs_response.json()
-
-#         if jobs_data["result"] != "success":
-#             return JsonResponse({"error": "Failed to fetch job information"}, status=400)
-        
-#         lonlat = jobs_data["data"]["lonlat"]["coordinates"]
-#         coordinates = {"lat": lonlat[1], "lng": lonlat[0]}
-        
-#         zoom_levels = range(16, 24)
-#         bounds = calculate_bounds(coordinates, zoom_levels)
-        
-#         context = {
-#             'job_id': job_id,
-#             'bounds': bounds,
-#             'coordinates': coordinates
-#         }
-#         return render(request, 'yongdam/map.html', context)
-#     except Exception as e:
-#         return JsonResponse({"error": str(e)}, status=400)
         
